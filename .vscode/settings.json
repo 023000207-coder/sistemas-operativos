@@ -1,3 +1,4 @@
 {
-    "idf.currentSetup": "C:\\esp\\v6.0.1\\esp-idf"
+    "idf.currentSetup": "C:\\esp\\v6.0.1\\esp-idf",
+    "cmake.sourceDirectory": "/mnt/c/Users/Hp i5/Desktop/sistemas operativos/src/starvation"
 }

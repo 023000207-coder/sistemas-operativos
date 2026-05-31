@@ -1,0 +1,5 @@
+[wokwi]
+version = 1
+
+firmware = "./src/starvation/build/starvation.bin"
+elf = "./src/starvation/build/starvation.elf"

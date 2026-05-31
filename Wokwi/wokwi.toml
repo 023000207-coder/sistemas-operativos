@@ -1,4 +1,4 @@
 [wokwi]
 version = 1
-firmware = "../src/multitask/build/multitask.bin"
-elf = "../src/multitask/build/multitask.elf"
+firmware = "../src/starvation/build/multitask.bin"
+elf = "../src/starvation/build/multitask.elf"

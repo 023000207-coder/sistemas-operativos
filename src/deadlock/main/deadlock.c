@@ -2,8 +2,7 @@
  * @file deadlock-demo.c
  * @brief Simple deadlock demonstration using FreeRTOS mutexes.
  *
- * WARNING:
- * This code intentionally creates a deadlock for educational purposes.
+ * This version uses timeouts to detect deadlock conditions.
  */
 
 #include <stdio.h>
@@ -26,20 +25,31 @@ static void TaskA(void *pvParameters)
     {
         printf("TaskA: Taking Mutex1\n");
 
-        xSemaphoreTake(g_mutex1, portMAX_DELAY);
+        if (xSemaphoreTake(g_mutex1, pdMS_TO_TICKS(1000U)) == pdTRUE)
+        {
+            printf("TaskA: Mutex1 acquired\n");
 
-        printf("TaskA: Mutex1 acquired\n");
+            vTaskDelay(pdMS_TO_TICKS(1000U));
 
-        vTaskDelay(pdMS_TO_TICKS(1000U));
+            printf("TaskA: Waiting for Mutex2\n");
 
-        printf("TaskA: Waiting for Mutex2\n");
+            if (xSemaphoreTake(g_mutex2, pdMS_TO_TICKS(1000U)) == pdTRUE)
+            {
+                printf("TaskA: Mutex2 acquired\n");
 
-        xSemaphoreTake(g_mutex2, portMAX_DELAY);
+                xSemaphoreGive(g_mutex2);
+            }
+            else
+            {
+                printf("TaskA: Timeout waiting for Mutex2\n");
+            }
 
-        printf("TaskA: Mutex2 acquired\n");
-
-        xSemaphoreGive(g_mutex2);
-        xSemaphoreGive(g_mutex1);
+            xSemaphoreGive(g_mutex1);
+        }
+        else
+        {
+            printf("TaskA: Timeout waiting for Mutex1\n");
+        }
 
         vTaskDelay(pdMS_TO_TICKS(100U));
     }
@@ -56,43 +66,63 @@ static void TaskB(void *pvParameters)
     {
         printf("TaskB: Taking Mutex2\n");
 
-        xSemaphoreTake(g_mutex2, portMAX_DELAY);
+        if (xSemaphoreTake(g_mutex2, pdMS_TO_TICKS(1000U)) == pdTRUE)
+        {
+            printf("TaskB: Mutex2 acquired\n");
 
-        printf("TaskB: Mutex2 acquired\n");
+            vTaskDelay(pdMS_TO_TICKS(1000U));
 
-        vTaskDelay(pdMS_TO_TICKS(1000U));
+            printf("TaskB: Waiting for Mutex1\n");
 
-        printf("TaskB: Waiting for Mutex1\n");
+            if (xSemaphoreTake(g_mutex1, pdMS_TO_TICKS(1000U)) == pdTRUE)
+            {
+                printf("TaskB: Mutex1 acquired\n");
 
-        xSemaphoreTake(g_mutex1, portMAX_DELAY);
+                xSemaphoreGive(g_mutex1);
+            }
+            else
+            {
+                printf("TaskB: Timeout waiting for Mutex1\n");
+            }
 
-        printf("TaskB: Mutex1 acquired\n");
-
-        xSemaphoreGive(g_mutex1);
-        xSemaphoreGive(g_mutex2);
+            xSemaphoreGive(g_mutex2);
+        }
+        else
+        {
+            printf("TaskB: Timeout waiting for Mutex2\n");
+        }
 
         vTaskDelay(pdMS_TO_TICKS(100U));
     }
 }
 
+/**
+ * @brief Application entry point.
+ */
 void app_main(void)
 {
     g_mutex1 = xSemaphoreCreateMutex();
     g_mutex2 = xSemaphoreCreateMutex();
 
+    if ((g_mutex1 == NULL) || (g_mutex2 == NULL))
+    {
+        printf("Error creating mutexes\n");
+        return;
+    }
+
     xTaskCreate(
         TaskA,
         "TaskA",
-        4096U,
+        4096,
         NULL,
-        5U,
+        5,
         NULL);
 
     xTaskCreate(
         TaskB,
         "TaskB",
-        4096U,
+        4096,
         NULL,
-        5U,
+        5,
         NULL);
 }
